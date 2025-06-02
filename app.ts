@@ -4,6 +4,10 @@ import { Application, Context } from "https://deno.land/x/abc@v1.3.3/mod.ts";
 
 const app = new Application();
 
+const envTest = Deno.env.get("BOT_TOKEN");
+
+console.log(envTest);
+
 console.log("http://localhost:3000/");
 
 app.static("/", "./public");

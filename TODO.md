@@ -5,7 +5,8 @@
 #### 1️⃣ **Setup & Environment**
 - ✓ Initialize a Deno project.
 - ✓  Install necessary dependencies (`abc` for HTTP handling, `telegraf` for Telegram integration, dotenv for environment variables).
-- 🚧 Set up environment variables for Telegram bot credentials.
+- ✓ Create a `public` directory for static assets.
+- ✓ Set up enviroment variables routing
 
 #### 2️⃣ **Define API Endpoints**
 - [ ] Create HTTP routes for:
