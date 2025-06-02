@@ -16,8 +16,17 @@ app
   .get("/", async (ctx: Context) => {
     await ctx.file("./public/index.html");
   })
-  .get('/test', (ctx: Context) => {
-    ctx.json({'response': 'Hello, Abc!'}), 200;
+  .post("/session/start", async (ctx: Context) => {
+    await ctx.json({ "state": "Start" }), 200;
+  })
+  .post("/session/pause", async (ctx: Context) => {
+    await ctx.json({ "state": "Pause" }), 200;
+  })
+  .post("/session/continue", async (ctx: Context) => {
+    await ctx.json({ "state": "Continue" }), 200;
+  })
+  .post("/session/complete", async (ctx: Context) => {
+    await ctx.json({ "state": "Complete" }), 200;
   });
 
 app.start({ port: 3000 });
