@@ -1,44 +1,116 @@
-# To do list
 
-### **Phase 1: Wireframe**
-
-#### 1️⃣ **Setup & Environment**
-
-- ✅ Route project files
-  - ✓ Initialize a Deno project.
-  - ✓ Install necessary dependencies (`abc` for HTTP handling, `telegraf` for
-    Telegram integration, dotenv for environment variables).
-  - ✓ Create a `public` directory for static assets.
-  - ✓ Set up enviroment variables routing
-
-#### 2️⃣ **Define API Endpoints**
-
-- ✅ Create HTTP routes for:
-  - ✓ **Start session:** `POST /session/start`
-  - ✓ **Pause session:** `POST /session/pause`
-  - ✓ **Continue session:** `POST /session/continue`
-  - ✓ **Complete session:** `POST /session/complete`
-- ✅ Implement basic request handling using **ABC package**.
-
-#### 3️⃣ **Integrate Telegram Logging**
-
-- 🚧 Telegram bot setup
-  - Research Telegram bot requirements.
-  - Set up **Telegraf for Deno** with Hello World test.
-  - Implement logic to send messages upon receiving each API request.
-
-#### 4️⃣ **Testing via HTTP Client**
-
-- [ ] Choose an HTTP client (e.g., **Postman**, `curl`, or **httpie**) for
-      testing.
-- [ ] Validate API request functionality (correct responses, proper Telegram
-      logging).
-- [ ] Ensure session flow is correctly triggered via API calls.
-
-#### 5️⃣ **Refinement & Debugging**
-
-- [ ] Handle errors gracefully (invalid requests, bot authentication failures).
-- [ ] Log API responses for better debugging.
-- [ ] Test concurrency handling (e.g., preventing multiple active sessions).
 
 ---
+
+### **Step-by-Step Guide**
+
+### **0️⃣ Adding a Bot to a Telegram Group**
+#### ✅ **Create the Bot**
+1. Go to [@BotFather](https://t.me/BotFather) in Telegram.
+2. Send the command:
+   ```
+   /newbot
+   ```
+3. Follow the instructions to name the bot and receive a **TOKEN**.
+4. Save the **TOKEN** somewhere safe (we’ll use it in Deno).
+
+#### ✅ **Add the Bot to Your Group**
+1. Open your **Startup** group.
+2. Add the bot like adding a regular member.
+3. Set the bot as **Admin** (if needed) so it can read messages and respond to commands.
+
+---
+
+### **1️⃣ Implement Tagged Username Responses for Commands**
+We’ll use **grammY** to listen for commands and tag the user in responses.
+
+#### ✅ **Install grammY in Deno**
+In your script:
+```ts
+import { Bot } from "https://deno.land/x/grammy@v1.21.1/mod.ts";
+
+const TOKEN = Deno.env.get("TOKEN"); // Load bot token from environment
+const bot = new Bot(TOKEN);
+
+bot.command("start", async (ctx) => {
+  await ctx.reply(`📢 @${ctx.from.username} started working!`);
+});
+
+bot.command("pause", async (ctx) => {
+  await ctx.reply(`⏸️ @${ctx.from.username} paused their session.`);
+});
+
+bot.command("complete", async (ctx) => {
+  await ctx.reply(`✅ @${ctx.from.username} completed their session.`);
+});
+
+// Start bot
+bot.start();
+```
+
+📌 **What This Does:**
+- Each command listens for messages in the group.
+- The bot responds **with the sender’s username** using `ctx.from.username`.
+
+---
+
+### **2️⃣ Calculating Time Spent Working for Each User**
+We’ll track time **per user** using a simple object storage in Deno.
+
+#### ✅ **Define a User Sessions Map**
+```ts
+const sessions = new Map<string, { start: number; pause: number[]; total: number }>();
+```
+
+#### ✅ **Update Commands to Track Time**
+```ts
+bot.command("start", async (ctx) => {
+  const user = ctx.from.username;
+  sessions.set(user, { start: Date.now(), pause: [], total: 0 });
+
+  await ctx.reply(`📢 @${user} started working!`);
+});
+
+bot.command("pause", async (ctx) => {
+  const user = ctx.from.username;
+  const session = sessions.get(user);
+
+  if (session) {
+    session.pause.push(Date.now());
+    await ctx.reply(`⏸️ @${user} paused their session.`);
+  } else {
+    await ctx.reply(`⚠️ @${user}, you need to start a session first!`);
+  }
+});
+
+bot.command("complete", async (ctx) => {
+  const user = ctx.from.username;
+  const session = sessions.get(user);
+
+  if (session) {
+    const totalTime = (Date.now() - session.start) - session.pause.reduce((acc, pauseTime) => acc + (Date.now() - pauseTime), 0);
+    const hours = Math.floor(totalTime / 3600000);
+    const minutes = Math.floor((totalTime % 3600000) / 60000);
+
+    await ctx.reply(`✅ @${user} worked for ${hours}h ${minutes}m!`);
+    sessions.delete(user);
+  } else {
+    await ctx.reply(`⚠️ @${user}, you haven't started a session yet!`);
+  }
+});
+```
+
+📌 **What This Does:**
+- `/start` logs the **start time** for each user.
+- `/pause` records pauses in an array.
+- `/complete` calculates total time worked and removes the session.
+
+---
+
+### 🚀 **Next Steps**
+Run the bot and test:
+```bash
+deno run --allow-net --allow-env bot.ts
+```
+Then try commands in your Telegram group!
+

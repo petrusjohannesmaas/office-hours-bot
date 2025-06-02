@@ -1,58 +1,34 @@
 # Office Hours Bot
 
-A Telegram-integrated time tracking bot that helps freelancers manage work
-sessions efficiently through REST APIs.
+A Telegram-integrated time tracking bot that improves accountability and transparency for remote teams.
 
 ## Features
 
-### Phase 1: Wireframe
+**MVP**  
+- Start, pause, complete work sessions for individual team members via Telegram.
+- Recieve response messages for each command.
+- Calculate total time spent working for each user.
 
-- Start, pause, continue, and complete work sessions via an **HTTP request**.
-- Work sessions are logged in a **Telegram chat**.
-- Testing is done via an **HTTP client** before frontend integration.
+**Alpha**
+- Set custom office hours notifications 
+- Report feature for individual team members
+- Email features
 
-### Phase 2: MVP
-
-- Enhance messages with contextual details for better tracking.
-
-### Phase 3: Alpha
-
-- Server-side fixed office hours.
-- Automated notifications:
-  - Before office hours start.
-  - Midway through office hours.
-  - At the end of office hours.
-- Notifications triggered via `cron` and `curl`.
-
-### Phase 4: Beta
-
-- Build frontend for session visualization.
-- Functionality to create reports and session notes of activities.
-
-### Phase 5: V1
-
-- Implement user authentication.
-- Deploy the project to a VPS.
-
-### Phase 6: V2
-
-- Integration with **Notion API** for database functionality and improved
-  logging.
+**Beta**
+- Integration with **Notion API** for database functionality and improved logging.
 
 ## Tech Stack
 
 - **Backend:** [Deno](https://github.com/denoland/deno)
+- **Telegram Integration:** [grammY](https://grammy.dev/)
 - **HTTP Handling:** [ABC](https://github.com/zhmushan/abc)
-- **Telegram Integration:** [Telegraf.js](https://github.com/telegraf/telegraf)
-- **Frontend:** HTML, CSS + JavaScript
 - **Automation:** Cron jobs + Curl
-- **Authentication:** To be determined (JWT, OAuth)
 
 ## Installation
 
 1. Clone the repository:
    ```bash
-   git clone <repo-url>
+   git clone https://github.com/petrusjohannesmaas/office-hours-bot.git
    ```
 2. Install dependencies:
    ```bash
@@ -66,14 +42,12 @@ sessions efficiently through REST APIs.
 
 ## Usage
 
-- Start, pause, continue, and complete work sessions via the browser interface.
-- Receive automated notifications during office hours.
-- Submit reports via the frontend.
-- Securely store work session logs and notes in Notion (from V2 onward).
+- Start, pause, continue, and complete work sessions via the chat interface.
+- Submit reports via the chat interface.
+- Securely store work session logs and notes in Notion (from Beta onward).
 
 ## Future Enhancements
 
-- Multi-user support.
 - Role-based access control.
 - Customizable office hours for administrators.
 - Expanded integrations (Google Calendar, Slack).

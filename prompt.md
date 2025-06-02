@@ -1,5 +1,18 @@
+Okay I have made some progress I am currently here:
+
+#### 3️⃣ **Integrate Telegram Logging**
+
+- 🚧 Telegram bot setup
+  - Research Telegram bot requirements.
+  - Set up **Telegraf for Deno** with Hello World test.
+  - Implement logic to send messages upon receiving each API request.
+
+Here's my app.ts I wrote so far:
+
+```ts
 import "@std/dotenv/load";
-import { Application, Context } from "https://deno.land/x/abc@v1.3.3/mod.ts"
+import { Application, Context } from "https://deno.land/x/abc@v1.3.3/mod.ts";
+// import telegraf from "npm:telegraf@3.30.1";
 
 const app = new Application();
 
@@ -29,3 +42,9 @@ app
   });
 
 app.start({ port: 3000 });
+
+```
+
+As you can see I have set everything up and its working as expected. Now, I need to figure out how to send messages to the Telegram chat.
+
+Please guide me step by step. Let's just start with implementing a single route for /test/hello.
