@@ -3,50 +3,84 @@ import "@std/dotenv/load";
 
 const TOKEN = Deno.env.get("BOT_TOKEN");
 
-// Create an instance of the `Bot` class and pass your bot token to it.
-const bot = new Bot(`${TOKEN}`); // <-- put your bot token between the ""
+const bot = new Bot(`${TOKEN}`);
 
-// You can now register listeners on your bot object `bot`.
-// grammY will call the listeners when users send messages to your bot.
-const sessions = new Map<string, { start: number; pause: number[]; total: number }>();
+// Session structure: one per user
+const sessions = new Map<string, {
+  start: number;
+  pausedAt: number | null;
+  totalPaused: number;
+  isPaused: boolean;
+}>();
+
+// Helper to get unique user ID (username or fallback to ID)
+function getUserKey(ctx: any): string {
+  return ctx.from.username || ctx.from.id.toString();
+}
 
 bot.command("start", async (ctx) => {
-  const user = ctx.from.username;
-  sessions.set(user, { start: Date.now(), pause: [], total: 0 });
+  const user = getUserKey(ctx);
+  const session = sessions.get(user);
 
-  await ctx.reply(`📢 @${user} started working!`);
+  if (session && session.isPaused) {
+    // Resume from pause
+    session.totalPaused += Date.now() - (session.pausedAt ?? 0);
+    session.pausedAt = null;
+    session.isPaused = false;
+    await ctx.reply(`▶️ @${ctx.from.username || "user"} resumed working!`);
+  } else {
+    // New session
+    sessions.set(user, {
+      start: Date.now(),
+      pausedAt: null,
+      totalPaused: 0,
+      isPaused: false,
+    });
+    await ctx.reply(`📢 @${ctx.from.username || "user"} started working!`);
+  }
 });
 
 bot.command("pause", async (ctx) => {
-  const user = ctx.from.username;
+  const user = getUserKey(ctx);
   const session = sessions.get(user);
 
-  if (session) {
-    session.pause.push(Date.now());
-    await ctx.reply(`⏸️ @${user} paused their session.`);
-  } else {
-    await ctx.reply(`⚠️ @${user}, you need to start a session first!`);
+  if (!session) {
+    await ctx.reply(`⚠️ @${ctx.from.username || "user"}, you need to start a session first!`);
+    return;
   }
+
+  if (session.isPaused) {
+    await ctx.reply(`⏸️ @${ctx.from.username || "user"}, you're already paused.`);
+    return;
+  }
+
+  session.pausedAt = Date.now();
+  session.isPaused = true;
+  await ctx.reply(`⏸️ @${ctx.from.username || "user"} paused their session.`);
 });
 
 bot.command("complete", async (ctx) => {
-  const user = ctx.from.username;
+  const user = getUserKey(ctx);
   const session = sessions.get(user);
 
-  if (session) {
-    const totalTime = (Date.now() - session.start) - session.pause.reduce((acc, pauseTime) => acc + (Date.now() - pauseTime), 0);
-    const hours = Math.floor(totalTime / 3600000);
-    const minutes = Math.floor((totalTime % 3600000) / 60000);
-
-    await ctx.reply(`✅ @${user} worked for ${hours}h ${minutes}m!`);
-    sessions.delete(user);
-  } else {
-    await ctx.reply(`⚠️ @${user}, you haven't started a session yet!`);
+  if (!session) {
+    await ctx.reply(`⚠️ @${ctx.from.username || "user"}, you haven't started a session yet!`);
+    return;
   }
+
+  // Add paused time if currently paused
+  let totalPaused = session.totalPaused;
+  if (session.isPaused && session.pausedAt !== null) {
+    totalPaused += Date.now() - session.pausedAt;
+  }
+
+  const totalTime = Date.now() - session.start - totalPaused;
+  const hours = Math.floor(totalTime / 3600000);
+  const minutes = Math.floor((totalTime % 3600000) / 60000);
+
+  await ctx.reply(`✅ @${ctx.from.username || "user"} worked for ${hours}h ${minutes}m!`);
+  sessions.delete(user);
 });
 
-// Now that you specified how to handle messages, you can start your bot.
-// This will connect to the Telegram servers and wait for messages.
-
-// Start the bot.
+// Start bot
 bot.start();
