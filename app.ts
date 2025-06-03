@@ -8,23 +8,42 @@ const bot = new Bot(`${TOKEN}`); // <-- put your bot token between the ""
 
 // You can now register listeners on your bot object `bot`.
 // grammY will call the listeners when users send messages to your bot.
+const sessions = new Map<string, { start: number; pause: number[]; total: number }>();
 
-// Handle the /start command.
-bot.command("greet", (ctx) => ctx.reply("Awe, ma se kind!"));
-// Handle other messages.
+bot.command("start", async (ctx) => {
+  const user = ctx.from.username;
+  sessions.set(user, { start: Date.now(), pause: [], total: 0 });
 
-// bot.on("message", (ctx) => ctx.reply("Boodskap ontvang."));
-
-bot.hears(/wie'?s daai man\??/i, async (ctx) => {
-  await ctx.reply("Wie's daai man wat sê wie's daai man?");
+  await ctx.reply(`📢 @${user} started working!`);
 });
 
-bot.command("notion", async (ctx) => {
-  await ctx.reply('✨ <b>Link:</b> <i>Moerse</i> larney link vir die Notion: <a href="https://www.notion.so/Block-Pulse-19f34cac52e380caba83f0471a869434">Click me boi</a>.', {
-    parse_mode: "HTML",
-  });
+bot.command("pause", async (ctx) => {
+  const user = ctx.from.username;
+  const session = sessions.get(user);
+
+  if (session) {
+    session.pause.push(Date.now());
+    await ctx.reply(`⏸️ @${user} paused their session.`);
+  } else {
+    await ctx.reply(`⚠️ @${user}, you need to start a session first!`);
+  }
 });
 
+bot.command("complete", async (ctx) => {
+  const user = ctx.from.username;
+  const session = sessions.get(user);
+
+  if (session) {
+    const totalTime = (Date.now() - session.start) - session.pause.reduce((acc, pauseTime) => acc + (Date.now() - pauseTime), 0);
+    const hours = Math.floor(totalTime / 3600000);
+    const minutes = Math.floor((totalTime % 3600000) / 60000);
+
+    await ctx.reply(`✅ @${user} worked for ${hours}h ${minutes}m!`);
+    sessions.delete(user);
+  } else {
+    await ctx.reply(`⚠️ @${user}, you haven't started a session yet!`);
+  }
+});
 
 // Now that you specified how to handle messages, you can start your bot.
 // This will connect to the Telegram servers and wait for messages.
