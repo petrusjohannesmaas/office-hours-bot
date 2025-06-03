@@ -1,31 +1,33 @@
+import { Bot } from "https://deno.land/x/grammy@v1.36.1/mod.ts";
 import "@std/dotenv/load";
-import { Application, Context } from "https://deno.land/x/abc@v1.3.3/mod.ts"
 
-const app = new Application();
+const TOKEN = Deno.env.get("BOT_TOKEN");
 
-const envTest = Deno.env.get("TOKEN");
+// Create an instance of the `Bot` class and pass your bot token to it.
+const bot = new Bot(`${TOKEN}`); // <-- put your bot token between the ""
 
-console.log(envTest);
+// You can now register listeners on your bot object `bot`.
+// grammY will call the listeners when users send messages to your bot.
 
-console.log("http://localhost:3000/");
+// Handle the /start command.
+bot.command("greet", (ctx) => ctx.reply("Awe, ma se kind!"));
+// Handle other messages.
 
-app.static("/", "./public");
+// bot.on("message", (ctx) => ctx.reply("Boodskap ontvang."));
 
-app
-  .get("/", async (ctx: Context) => {
-    await ctx.file("./public/index.html");
-  })
-  .post("/session/start", async (ctx: Context) => {
-    await ctx.json({ "state": "Start" }), 200;
-  })
-  .post("/session/pause", async (ctx: Context) => {
-    await ctx.json({ "state": "Pause" }), 200;
-  })
-  .post("/session/continue", async (ctx: Context) => {
-    await ctx.json({ "state": "Continue" }), 200;
-  })
-  .post("/session/complete", async (ctx: Context) => {
-    await ctx.json({ "state": "Complete" }), 200;
+bot.hears(/wie'?s daai man\??/i, async (ctx) => {
+  await ctx.reply("Wie's daai man wat sê wie's daai man?");
+});
+
+bot.command("notion", async (ctx) => {
+  await ctx.reply('✨ <b>Link:</b> <i>Moerse</i> larney link vir die Notion: <a href="https://www.notion.so/Block-Pulse-19f34cac52e380caba83f0471a869434">Click me boi</a>.', {
+    parse_mode: "HTML",
   });
+});
 
-app.start({ port: 3000 });
+
+// Now that you specified how to handle messages, you can start your bot.
+// This will connect to the Telegram servers and wait for messages.
+
+// Start the bot.
+bot.start();
