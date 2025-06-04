@@ -3,12 +3,12 @@
 ## Features
 
 **MVP**  
-✅ Start, pause, complete work sessions for individual team members via Telegram.
-✅ Concurrent usage and tracking
-✅ Recieve basic feedback for every command
+- ✅ Start, pause, complete work sessions for individual team members via Telegram.
+- ✅ Concurrent usage and tracking
+- ✅ Recieve basic feedback for every command
 
 **Alpha**
-🏗️ Docker compose deployment
+- 🏗️ Docker compose deployment
 - Set custom office hours
 - Email features
 
