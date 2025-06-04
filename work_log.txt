@@ -1,16 +1,20 @@
-User: 6847080382
-Worked for: 0h 0m
-Tasks: Deez nuts
+User: 12345678 
+Worked for: 0h 5m
+Tasks: Testing the endpoints
 
-User: 6847080382
-Worked for: 0h 0m
-Tasks: Jan
+User: JohnDoe321
+Worked for: 1h 0m
+Tasks: Counting my teeth
 
-User: 6847080382
-Worked for: 0h 0m
-Tasks: test
+User: MaryPoppins01
+Worked for: 0h 15m
+Tasks: Cleaning the chimney
 
-User: RobertMD11
-Worked for: 0h 0m
-Tasks: /hello
+User: DarthVader
+Worked for: 0h 5m
+Tasks: Called my son
+
+User: pjmaas
+Worked for: 2h m
+Tasks: Finished the MVP
 
