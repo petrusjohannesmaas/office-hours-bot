@@ -1,17 +1,15 @@
 # Office Hours Bot
 
-A Telegram-integrated time tracking bot that improves accountability and transparency for remote teams.
-
 ## Features
 
 **MVP**  
-- Start, pause, complete work sessions for individual team members via Telegram.
-- Recieve response messages for each command.
-- Calculate total time spent working for each user.
+✅ Start, pause, complete work sessions for individual team members via Telegram.
+✅ Concurrent usage and tracking
+✅ Recieve basic feedback for every command
 
 **Alpha**
-- Set custom office hours notifications 
-- Report feature for individual team members
+🏗️ Docker compose deployment
+- Set custom office hours
 - Email features
 
 **Beta**
@@ -21,7 +19,6 @@ A Telegram-integrated time tracking bot that improves accountability and transpa
 
 - **Backend:** [Deno](https://github.com/denoland/deno)
 - **Telegram Integration:** [grammY](https://grammy.dev/)
-- **HTTP Handling:** [ABC](https://github.com/zhmushan/abc)
 - **Automation:** Cron jobs + Curl
 
 ## Installation
@@ -37,14 +34,15 @@ A Telegram-integrated time tracking bot that improves accountability and transpa
 3. Configure environment variables.
 4. Run the server:
    ```bash
-   deno run --allow-net server.ts
+   deno run --allow-all server.ts
    ```
 
 ## Usage
 
-- Start, pause, continue, and complete work sessions via the chat interface.
-- Submit reports via the chat interface.
-- Securely store work session logs and notes in Notion (from Beta onward).
+- Run `/start`, `/continue`, `/complete` to manage a session
+- On complete, you need to respond with the tasks you were working on
+- Share the generated work log with colleagues or keep it for your documentation (Maybe with Git?)
+- Access the `work_log.txt` in the project 
 
 ## Future Enhancements
 
