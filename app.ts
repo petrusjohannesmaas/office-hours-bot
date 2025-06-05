@@ -1,10 +1,9 @@
-import { Bot, Context, InputFile } from "https://deno.land/x/grammy@v1.36.1/mod.ts";
+import { Bot, Context } from "https://deno.land/x/grammy@v1.36.1/mod.ts";
 import "@std/dotenv/load";
-import { existsSync } from "https://deno.land/std/fs/mod.ts";
+import { isAuthorized } from "./auth.ts";
+import { logWorkToNotion } from "./notion.ts";
 
-const TOKEN = Deno.env.get("BOT_TOKEN");
-
-const bot = new Bot(`${TOKEN}`);
+const bot = new Bot(Deno.env.get("BOT_TOKEN")!);
 
 const sessions = new Map<string, {
   start: number;
@@ -16,21 +15,26 @@ const sessions = new Map<string, {
 const pendingResponses = new Map<string, { hours: number, minutes: number }>();
 
 function getUserKey(ctx: Context): string {
-  if (!ctx.from) {
-    throw new Error("User information is not available.");
-  }
+  if (!ctx.from) throw new Error("Missing user");
   return ctx.from.username || ctx.from.id.toString();
 }
+
+bot.use(async (ctx, next) => {
+  if (!ctx.from || !isAuthorized(getUserKey(ctx))) {
+    return ctx.reply("🚫 This bot is private.");
+  }
+  await next();
+});
 
 bot.command("start", async (ctx) => {
   const user = getUserKey(ctx);
   const session = sessions.get(user);
 
-  if (session && session.isPaused) {
+  if (session?.isPaused) {
     session.totalPaused += Date.now() - (session.pausedAt ?? 0);
     session.pausedAt = null;
     session.isPaused = false;
-    await ctx.reply(`▶️ @${ctx.from?.username || "user"} resumed working!`);
+    await ctx.reply(`▶️ @${ctx.from?.username} resumed working!`);
   } else {
     sessions.set(user, {
       start: Date.now(),
@@ -38,7 +42,7 @@ bot.command("start", async (ctx) => {
       totalPaused: 0,
       isPaused: false,
     });
-    await ctx.reply(`📢 @${ctx.from?.username || "user"} started working!`);
+    await ctx.reply(`📢 @${ctx.from?.username} started working!`);
   }
 });
 
@@ -46,29 +50,19 @@ bot.command("pause", async (ctx) => {
   const user = getUserKey(ctx);
   const session = sessions.get(user);
 
-  if (!session) {
-    await ctx.reply(`⚠️ @${ctx.from?.username || "user"}, you need to start a session first!`);
-    return;
-  }
-
-  if (session.isPaused) {
-    await ctx.reply(`⏸️ @${ctx.from?.username || "user"}, you're already paused.`);
-    return;
-  }
+  if (!session) return ctx.reply("⚠️ Start a session first!");
+  if (session.isPaused) return ctx.reply("⏸️ Already paused.");
 
   session.pausedAt = Date.now();
   session.isPaused = true;
-  await ctx.reply(`⏸️ @${ctx.from?.username || "user"} paused their session.`);
+  await ctx.reply("⏸️ Session paused.");
 });
 
 bot.command("complete", async (ctx) => {
   const user = getUserKey(ctx);
   const session = sessions.get(user);
 
-  if (!session) {
-    await ctx.reply(`⚠️ @${ctx.from?.username || "user"}, you haven't started a session yet!`);
-    return;
-  }
+  if (!session) return ctx.reply("⚠️ Start a session first!");
 
   let totalPaused = session.totalPaused;
   if (session.isPaused && session.pausedAt !== null) {
@@ -81,44 +75,24 @@ bot.command("complete", async (ctx) => {
 
   pendingResponses.set(user, { hours, minutes });
 
-  await ctx.reply(`✅ You worked for ${hours}h ${minutes}m! What did you work on?`);
   sessions.delete(user);
+  await ctx.reply(`✅ You worked ${hours}h ${minutes}m! Please write a short description of your tasks.`);
 });
 
 bot.on("message", async (ctx) => {
   const user = getUserKey(ctx);
+  if (!pendingResponses.has(user)) return;
 
-  if (!pendingResponses.has(user)) return; // Ignore messages unless user is expected to reply.
+  const workDescription = ctx.message?.text;
+  if (!workDescription) {
+    return ctx.reply("⚠️ Please send a description.");
+  }
 
   const { hours, minutes } = pendingResponses.get(user)!;
-  const workDescription = ctx.message?.text;
-
-  if (!workDescription) {
-    await ctx.reply("⚠️ Please reply with a text description of what you worked on.");
-    return;
-  }
-
   pendingResponses.delete(user);
 
-  const logEntry = `User: ${user}\nWorked for: ${hours}h ${minutes}m\nTasks: ${workDescription}\n\n`;
-  const filePath = `./work_log.txt`;
-
-  // Append to the file or create a new one
-  if (existsSync(filePath)) {
-    await Deno.writeTextFile(filePath, logEntry, { append: true });
-  } else {
-    await Deno.writeTextFile(filePath, logEntry);
-  }
-
-const blob = new Blob([logEntry], { type: "text/plain" });
-const arrayBuffer = await blob.arrayBuffer();
-const now = new Date();
-const timestamp = `${now.getFullYear()}-${(now.getMonth() + 1).toString().padStart(2, "0")}-${now.getDate().toString().padStart(2, "0")}_${now.getHours().toString().padStart(2, "0")}-${now.getMinutes().toString().padStart(2, "0")}`;
-const filename = `work_log_${timestamp}.txt`;
-const uint8 = new Uint8Array(arrayBuffer);
-
-const file = new InputFile(uint8, filename);
-await ctx.replyWithDocument(file);
+  await logWorkToNotion(user, hours, minutes, workDescription);
+  await ctx.reply("📝 Your work has been logged to Notion.");
 });
 
 bot.start();
